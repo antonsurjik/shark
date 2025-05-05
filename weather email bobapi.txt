@@ -1,0 +1,78 @@
+dotnet new webapi
+
+// Models/Book.cs
+namespace WebApiDemo.Models
+{
+    public class Book
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Author { get; set; }
+    }
+}
+
+// Controllers/BooksController.cs
+using Microsoft.AspNetCore.Mvc;
+using WebApiDemo.Models;
+
+namespace WebApiDemo.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class BooksController : ControllerBase
+    {
+        private static List<Book> _books = new List<Book>
+        {
+            new Book { Id = 1, Title = "1984", Author = "Lev" },
+            new Book { Id = 2, Title = "Brave New World", Author = "Ruzvelt" }
+        };
+
+        [HttpGet]
+        public ActionResult<IEnumerable<Book>> GetAll() => Ok(_books);
+
+        [HttpGet("{id}")]
+        public ActionResult<Book> Get(int id)
+        {
+            var book = _books.FirstOrDefault(b => b.Id == id);
+            if (book == null) return NotFound();
+            return Ok(book);
+        }
+
+        [HttpPost]
+        public ActionResult<Book> Create([FromBody] Book book)
+        {
+            book.Id = _books.Max(b => b.Id) + 1;
+            _books.Add(book);
+            return CreatedAtAction(nameof(Get), new { id = book.Id }, book);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, [FromBody] Book updatedBook)
+        {
+            var book = _books.FirstOrDefault(b => b.Id == id);
+            if (book == null) return NotFound();
+
+            book.Title = updatedBook.Title;
+            book.Author = updatedBook.Author;
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var book = _books.FirstOrDefault(b => b.Id == id);
+            if (book == null) return NotFound();
+
+            _books.Remove(book);
+            return NoContent();
+        }
+    }
+}
+
+dotnet run
+POST /api/books
+{
+  "title": "Дюна",
+  "author": "Бенджамин"
+}
